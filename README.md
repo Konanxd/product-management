@@ -14,7 +14,7 @@ cd project/Laravel/Komawan
 
 ## 2. Lakukan clone
 ```bash
-git clone [https://github.com/Konanxd/product-management.git](https://github.com/Konanxd/product-management.git)
+git clone https://github.com/Konanxd/product-management.git
 cd product-management
 ```
 
