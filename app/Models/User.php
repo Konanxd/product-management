@@ -7,13 +7,15 @@ use App\Models\Organization;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    // use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +26,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'organization_id',
+        'role'
     ];
 
     /**
@@ -46,15 +50,33 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function organizations(): BelongsToMany
+    public function organization(): BelongsTo
     {
-        return $this->belongsToMany(Organization::class, 'organization_user')
-            ->withPivot('role')
-            ->withTimestamps();
+        return $this->belongsTo(Organization::class, 'organizations');
     }
 
-    public function ownedOrganization(): HasMany
+    // public function ownedOrganization(): HasMany
+    // {
+    //     return $this->hasMany(Organization::class, 'owner_id');
+    // }
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
     {
-        return $this->hasMany(Organization::class, 'owner_id');
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return []; // You can add custom claims here if needed
     }
 }

@@ -17,6 +17,12 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->foreignId('organiation_id')
+                ->nullable()
+                ->constrained()
+                ->onDelete('cascade');
+            $table->enum('role', ['admin', 'owner', 'member'])
+                ->default('member');
             $table->rememberToken();
             $table->timestamps();
         });
