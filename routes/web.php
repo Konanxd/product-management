@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\AuthPagesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\OrgController;
 use App\Http\Controllers\ProductController;
 
 /*
@@ -16,11 +19,15 @@ use App\Http\Controllers\ProductController;
 |
 */
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthPagesController::class, 'login'])->name('login');
+    Route::get('/register', [AuthPagesController::class, 'register'])->name('register');
+});
 
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
+Route::get('/choices', [OrgController::class, 'choices']);
+Route::get('/create_organization', [OrgController::class, 'create']);
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 

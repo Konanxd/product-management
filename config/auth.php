@@ -41,10 +41,10 @@ return [
             'provider' => 'users',
         ],
 
-        'sanctum' => [
-            'driver' => 'sanctum',
-            'provider' => null,
-        ],
+        // 'sanctum' => [
+        //     'driver' => 'sanctum',
+        //     'provider' => null,
+        // ],
 
         'api' => [
             'driver' => 'jwt',

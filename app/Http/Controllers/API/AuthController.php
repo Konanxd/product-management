@@ -4,14 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Contracts\Providers\auth;
-use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 
 class AuthController extends Controller
 {
@@ -42,9 +42,14 @@ class AuthController extends Controller
         ]);
 
         if ($user) {
+            $token = Auth::guard('api')->login($user);
+
             return response()->json([
                 'success' => true,
                 'message' => 'User berhasil terdaftar',
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
                 'user' => $user
             ], 201);
         }
@@ -68,24 +73,37 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        if (!$token = auth('api')->attempt($credentials)) {
+        try {
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email atau password anda salah'
+                ], 422);
+            }
+        } catch (JWTException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Email atau password anda salah'
-            ], 422);
+                'message' => 'Gagal melakukan login'
+            ], 500);
         }
-
         $user = auth('api')->user();
         return response()->json([
             'success' => true,
-            'user' => $user,
-            'token' => $token
+            'message' => 'User berhasil masuk',
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+            'user' => $user
         ], 200);
     }
 
     public function me()
     {
-        return response()->json(auth('api')->user());
+        $user = auth('api')->user();
+        return response()->json([
+            'user' => $user,
+            'organizations' => $user->organizations()->get()
+        ]);
     }
 
     public function logout()
@@ -107,7 +125,7 @@ class AuthController extends Controller
     public function refresh()
     {
         try {
-            $newToken = auth('api')->refresh();
+            $newToken = JWTAuth::refresh(JWTAuth::getToken());
 
             if (!$newToken) {
                 return response()->json([

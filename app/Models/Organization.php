@@ -16,17 +16,18 @@ class Organization extends Model
 
     protected $fillable = [
         'name',
-        'owner_id'
     ];
 
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'owner_id');
-    }
+    // public function owner(): BelongsTo
+    // {
+    //     return $this->belongsTo(User::class, 'user_id');
+    // }
 
-    public function members(): HasMany
+    public function users(): BelongsToMany
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'organization_users')
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function categories(): HasMany

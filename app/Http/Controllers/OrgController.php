@@ -10,11 +10,21 @@ use Illuminate\Support\Facades\Validator;
 
 class OrgController extends Controller
 {
+    public function choices()
+    {
+        return view('pages.auth.choices');
+    }
+
+    public function create()
+    {
+        return view('pages.auth.organization');
+    }
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
-            'owner_id' => 'required'
+            'user_id' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -25,7 +35,7 @@ class OrgController extends Controller
 
         $organization = Organization::create([
             'name' => $request->name,
-            'owner_id' => $user->getAuthIdentifier()
+            'user_id' => $user->getAuthIdentifier()
         ]);
 
         if (!$organization) {
@@ -43,7 +53,51 @@ class OrgController extends Controller
         ], 201);
     }
 
-    public function update(Request $request)
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|unique:organization,name',
+        ]);
+
+        if (!$validator) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama sudah tersedia'
+            ], 500);
+        }
+
+        $user = auth('api')->user();
+
+        DB::beginTransaction();
+
+        try {
+            $org = Organization::create([
+                'name' => $request->name
+            ]);
+
+            $org->users()->attach($user->id, [
+                'role' => 'owner'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil ditambahkan ke dalam organisasi Anda',
+                'user' => $user,
+                'organization' => $org
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan' . $e
+            ], 500);
+        }
+    }
+
+    public function storeMember(Request $request)
     {
         if (!$this->isOwner()) {
             return response()->json([

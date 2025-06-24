@@ -10,6 +10,41 @@
     <title>Dashboard RoyalStore</title>
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     @vite('resources/css/app.css')
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        fetch('/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Unauthorized");
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (!data.user || data.organizations.length == 0) {
+                    window.location.href = '/choices';
+                }
+            })
+            .catch(err => {
+                console.error("Page error:", err);
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            });
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+    </script>
     {{-- <script src="/js/app.js"></script> --}}
 </head>
 

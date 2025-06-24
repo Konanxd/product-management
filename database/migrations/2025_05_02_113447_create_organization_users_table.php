@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('organization_id')
                 ->constrained('organizations')
                 ->onDelete('cascade');
+            $table->enum('role', ['admin', 'owner', 'member'])
+                ->default('member');
             $table->timestamps();
         });
     }
