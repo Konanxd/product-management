@@ -16,6 +16,7 @@ class Organization extends Model
 
     protected $fillable = [
         'name',
+        'owner_id',
     ];
 
     // public function owner(): BelongsTo
