@@ -80,7 +80,7 @@
                         <input id="name" type="text" name="name" placeholder="John Doe"
                             class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
                             value="{{ old('name') }}" required autofocus autocomplete="name" />
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-2 text-sm text-red-600"></p>
 
                     </div>
 
@@ -92,7 +92,7 @@
                         <input id="email" type="email" name="email" placeholder="you@example.com"
                             class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
                             value="{{ old('email') }}" required autocomplete="username" />
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-2 text-sm text-red-600"></p>
 
                     </div>
 

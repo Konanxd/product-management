@@ -9,6 +9,7 @@
     <meta name="author" content="" />
     <title>Dashboard RoyalStore</title>
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    {{-- <script type="module" src="http://localhost:5173/@vite/client"></script> --}}
     @vite('resources/css/app.css')
     <script>
         const token = localStorage.getItem('token');
