@@ -24,6 +24,7 @@ class OrgController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
+            'description' => 'required|string',
             'user_id' => 'required'
         ]);
 
@@ -35,19 +36,20 @@ class OrgController extends Controller
 
         $organization = Organization::create([
             'name' => $request->name,
-            'user_id' => $user->getAuthIdentifier()
+            'description' => $request->description,
         ]);
 
         if (!$organization) {
+
             return response()->json([
                 'success' => false,
-                'message' => 'User sudah terdaftar'
+                'message' => 'Organisasi sudah terdaftar'
             ], 409);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'User berhasil terdaftar',
+            'message' => 'Organisasi berhasil terdaftar',
             'user' => $user,
             'organization' => $organization
         ], 201);

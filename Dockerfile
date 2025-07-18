@@ -1,27 +1,24 @@
-FROM dunglas/frankenphp:php8.2
+# FROM dunglas/frankenphp:php8.2
+FROM php:8.2-fpm
 
-ENV SERVER_NAME=":80"
-
-WORKDIR /app
+ENV SERVER_NAME=":81"
 
 COPY . .
 
 RUN apt update && apt install -y \
-    zip unzip git curl libzip-dev libonig-dev \
-    && docker-php-ext-install zip pdo_mysql mbstring bcmath
+    git zip unzip curl libpng-dev libzip-dev libonig-dev libxml2-dev \
+    npm nodejs nginx supervisor \
+    && docker-php-ext-install zip pdo_mysql mbstring zip exif pcntl
 
-COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
+WORKDIR /var/www/product-management
 
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
-
-COPY composer.* ./
-RUN composer install
-
-COPY package*.json ./
-RUN npm install
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
-# RUN npm run dev
 
-EXPOSE 80
+RUN composer install --no-dev --optimize-autoloader \
+&& npm install && npm run build
+
+# EXPOSE 80
+EXPOSE 9000
+CMD ["php-fpm"]

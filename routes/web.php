@@ -20,8 +20,8 @@ use App\Http\Controllers\ProductController;
 */
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthPagesController::class, 'login'])->name('login');
-    Route::get('/register', [AuthPagesController::class, 'register'])->name('register');
+    Route::get('/masuk', [AuthPagesController::class, 'login'])->name('login');
+    Route::get('/daftar', [AuthPagesController::class, 'register'])->name('register');
 });
 
 Route::get('/choices', [OrgController::class, 'choices']);

@@ -43,102 +43,65 @@
     </style>
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
-    <div class="min-h-screen flex items-center justify-center">
-        <div
-            class="flex flex-col md:flex-row w-full max-w-4xl bg-white dark:bg-gray-800 shadow-2xl rounded-2xl overflow-hidden m-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="relative flex flex-col md:flex-row w-full max-w-4xl min-h-[600px] bg-white rounded-xl shadow-2xl overflow-hidden m-4">
 
-            <!-- Left Panel (Branding) -->
-            <div
-                class="w-full md:w-1/2 bg-gray-800 p-12 text-white flex flex-col justify-center items-center text-center">
-                <div class="max-w-xs">
-                    <h1 class="text-4xl font-bold mb-4">Join Our Community!</h1>
-                    <p class="text-gray-300 mb-8">
-                        Create an account to get started. It's free and only takes a minute.
-                    </p>
-                    <div id="errorMsg" class="text-red-400"></div>
-                    <svg class="w-48 h-48 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
-                        </path>
-                    </svg>
+        <div class="bg-blue-600 w-full md:w-1/2 text-white p-8 md:p-12 flex-col justify-center hidden md:flex overflow-hidden relative">
+            <div class="absolute w-[300px] h-[300px] bg-white/10 rounded-full -top-[50px] -left-[100px]"></div>
+            <div class="absolute w-[400px] h-[400px] bg-white/10 rounded-[45%] -bottom-[150px] -right-[100px] rotate-[30deg] "></div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="bg-white rounded-full p-2">
+                        logo
+                    </div>
+                    <span class="text-xl font-bold tracking-wider">InventoHub</span>
                 </div>
-            </div>
 
-            <!-- Right Panel (Registration Form) -->
-            <div class="w-full md:w-1/2 p-8 md:p-12">
-                <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">Create Account</h2>
-
-                <form id='registerForm'>
-                    @csrf
-
-                    <!-- Name -->
-                    <div class="mb-5">
-                        <label for="name"
-                            class="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Full Name</label>
-                        <input id="name" type="text" name="name" placeholder="John Doe"
-                            class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                            value="{{ old('name') }}" required autofocus autocomplete="name" />
-                        <p class="mt-2 text-sm text-red-600"></p>
-
-                    </div>
-
-                    <!-- Email Address -->
-                    <div class="mb-5">
-                        <label for="email"
-                            class="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Email
-                            Address</label>
-                        <input id="email" type="email" name="email" placeholder="you@example.com"
-                            class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                            value="{{ old('email') }}" required autocomplete="username" />
-                        <p class="mt-2 text-sm text-red-600"></p>
-
-                    </div>
-
-                    <!-- Password -->
-                    <div class="mb-5">
-                        <label for="password"
-                            class="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Password</label>
-                        <input id="password" type="password" name="password" placeholder="Create a strong password"
-                            class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                            required autocomplete="new-password" />
-                        {{--
-                            @error('password')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                        --}}
-                    </div>
-
-                    <!-- Confirm Password -->
-                    <div class="mb-6">
-                        <label for="password_confirmation"
-                            class="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Confirm
-                            Password</label>
-                        <input id="password_confirmation" type="password" name="password_confirmation"
-                            placeholder="Confirm your password"
-                            class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                            required autocomplete="new-password" />
-                    </div>
-
-                    <!-- Register Button -->
-                    <div>
-                        <button type="submit"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition duration-300 transform hover:scale-105">
-                            Register
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Login Link -->
-                <p class="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                    Already have an account?
-                    <a href="{{-- route('login') --}}"
-                        class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                        Log in
-                    </a>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 leading-tight">Buat Akun Adna</h1>
+                <p class="text-blue-100">
+                    Bergabung bersama kami untuk? untuk apa?
                 </p>
             </div>
+        </div>
+
+        <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Buat Akun Baru</h2>
+
+            <form id='registerForm'>
+                @csrf
+
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-600 mb-1">Nama Lengkap</label>
+                    <input type="text" id="name" name="name" placeholder="Nama" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                </div>
+
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-600 mb-1">Alamat Email</label>
+                    <input type="email" id="email" name="email" placeholder="nama@mail.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="block text-sm font-medium text-gray-600 mb-1">Password</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                </div>
+
+                <div class="mb-6">
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-600 mb-1">Konfirmasi Password</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" placeholder="••••••••" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                </div>
+
+                <div class="mb-4">
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                        Daftar
+                    </button>
+                </div>
+                <div class="text-center text-sm">
+                    <p class="text-gray-600">
+                        Sudah punya akun?
+                        <a href="{{ url('/masuk') }}" class="font-medium text-blue-600 hover:text-blue-500">Masuk di sini</a>
+                    </p>
+                </div>
+            </form>
         </div>
     </div>
 
