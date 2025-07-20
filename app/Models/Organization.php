@@ -16,12 +16,8 @@ class Organization extends Model
 
     protected $fillable = [
         'name',
+        'description',
     ];
-
-    // public function owner(): BelongsTo
-    // {
-    //     return $this->belongsTo(User::class, 'user_id');
-    // }
 
     public function users(): BelongsToMany
     {
@@ -33,5 +29,10 @@ class Organization extends Model
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
+    }
+
+    public function products()
+    {
+        return $this->hasManyThrough(Product::class, Category::class);
     }
 }

@@ -1,173 +1,214 @@
 @extends('layouts.main')
 
+@section('script')
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/masuk';
+    }
+
+    let data = null;
+    let orgId = '';
+
+    (async () => {
+        try {
+            const res = await fetch('/api/data/categories', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error("Unauthorized");
+            }
+
+            data = await res.json();
+
+            if (!data.user || data.organizations.length == null) {
+                window.location.href = '/choices';
+                return;
+            }
+
+            orgId = `${data.organizations[0].id}`
+
+            document.getElementById('username').innerText = data.user.name;
+
+            let tableContent = '';
+
+            data.categories.forEach(category => {
+                tableContent += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td id="categoryName" class="px-6 py-4 font-medium text-gray-900">${category.name}</td>
+                        <td id='totalProduct' class="px-6 py-4">${category.total_stock ?? 0}</td>
+                        <td class="create-org-btn px-6 py-4 text-right">
+                        <a href="#"
+                        class="edit-btn font-medium text-blue-600 hover:underline"
+                        data-id="${category.id}"}
+                        data-name="${category.name}"}
+                        >Edit</a></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('categoryProducts').innerHTML = tableContent;
+
+            attachEditListeners();
+        } catch (err) {
+            console.error("Page error:", err);
+            // localStorage.removeItem('token');
+            // window.location.href = '/masuk';
+        }
+    })();
+
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/masuk';
+    }
+</script>
+@endsection
+
 @section('content')
-    <div class="flex flex-col justify-center w-full px-4">
-        <h1 class="text-4xl font-semibold">Category</h1>
-
-        <div class="w-full flex justify-center">
-            <div class="w-full my-4 mx-20 p-4">
-                <h2 class="text-center text-3xl font-semibold mb-4">Manajemen Kategori</h2>
-
-                @if (session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4"
-                        id="successMessage">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                <!-- Tambah Kategori Button -->
-                <div class="flex justify-between items-center mb-4">
-                    <button id="addButton" onclick="openModal(this.id)"
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" data-bs-toggle="modal"
-                        data-bs-target="#categoryModal">
-                        <i class="fas fa-plus mr-2"></i> Tambah Kategori
-                    </button>
-                </div>
-
-                <!-- Table -->
-                <div class="overflow-y-auto max-h-[400px] border rounded shadow-sm">
-                    <table class="min-w-full table-auto">
-                        <thead class="bg-gray-800 text-white">
-                            <tr>
-                                <th class="px-4 py-2 text-left">ID</th>
-                                <th class="px-4 py-2 text-left">Nama Kategori</th>
-                                <th class="px-4 py-2 text-left">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="categoryTableBody" class="divide-y divide-gray-200">
-                            @foreach ($categories as $category)
-                                <tr id="categoryRow{{ $category->id }}" class="hover:bg-gray-100">
-                                    <td class="px-4 py-2">{{ $category->id }}</td>
-                                    <td class="px-4 py-2">{{ $category->name }}</td>
-                                    <td class="px-4 py-2 space-x-2">
-                                        <!-- Edit Button -->
-                                        <button id="editButton" onclick="openModal(this.id)"
-                                            class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition editCategoryBtn"
-                                            data-id="{{ $category->id }}" data-name="{{ $category->name }}"
-                                            data-bs-toggle="modal" data-bs-target="#editCategoryModal">
-                                            <i class="fas fa-edit mr-1"></i> Edit
-                                        </button>
-
-                                        <!-- Delete Form -->
-                                        <form action="{{ route('categories.destroy', $category->id) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
-                                                <i class="fas fa-trash mr-1"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-lg">
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Daftar Kategori Global</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Nama Kategori</th>
+                        <th scope="col" class="px-6 py-3">Jumlah Produk</th>
+                        <th scope="col" class="px-6 py-3 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id='categoryProducts'>
+                </tbody>
+            </table>
         </div>
-
-        <!-- Modal Tambah Kategori -->
-        <div id="modalAdd" class="fixed inset-0 bg-black/50 z-50 hidden">
-            <div class="flex mt-4 items-center justify-center">
-                <div class="bg-white opacity-100 rounded-lg w-full max-w-md shadow-lg">
-                    <div class="flex justify-between items-center p-4 border-b">
-                        <h5 class="text-lg font-semibold">Tambah Kategori</h5>
-                        <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeModal(this.id)"
-                            id="addButton">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="p-4">
-                        <form id="addCategoryForm" action="/categories" method="POST">
-                            @csrf
-                            <div class="mb-4">
-                                <label for="categoryName" class="block text-sm font-medium text-gray-700 mb-1">Nama
-                                    Kategori</label>
-                                <input type="text" name="name" id="categoryName"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-500"
-                                    required>
-                            </div>
-                            <button type="submit"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2">
-                                <i class="fas fa-save"></i> Simpan
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Edit Kategori -->
-        <div id="modalEdit" class="fixed inset-0 bg-black/50 z-50 hidden">
-            <div class="flex mt-4 items-center justify-center">
-                <div class="bg-white opacity-100 rounded-lg w-full max-w-md shadow-lg">
-                    <div class="flex justify-between items-center p-4 border-b">
-                        <h5 class="text-lg font-semibold">Edit Kategori</h5>
-                        <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeModal(this.id)"
-                            id="editButton">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="p-4">
-                        <form id="editCategoryForm" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <div class="mb-4">
-                                <label for="categoryEdit" class="block text-sm font-medium text-gray-700 mb-1">Nama
-                                    Kategori</label>
-                                <input type="text" name="name" id="editCategoryName"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-500"
-                                    required>
-                            </div>
-                            <button type="submit"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2">
-                                <i class="fas fa-save"></i> Simpan Perubahan
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Tambah Kategori Baru</h3>
+        <form id="createCategoryForm">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Nama Kategori</label>
+                <input id="name" type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="mt-6">
+                <button type="submit" class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Simpan Kategori</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-    <script>
-        function openModal(id) {
-            if (id == "addButton") {
-                document.getElementById('modalAdd').classList.remove('hidden');
-            } else if (id == "editButton") {
-                document.getElementById('modalEdit').classList.remove('hidden');
-            }
-        }
+<div id="edit-category-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-700">Edit Kategori</h3>
+            <button id="close-edit-modal" class="text-gray-400 hover:text-gray-800">&times;</button>
+        </div>
+        <form id="editCategoryForm">
+            @csrf
+            <input type="text" id="edit-category-id" class="hidden">
+            <div>
+                <label for="edit-category-name" class="block text-sm font-medium text-gray-700">Nama Kategori</label>
+                <input id="edit-category-name" type="text" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mt-6">
+                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-300">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        function closeModal(id) {
-            if (id == "addButton") {
-                document.getElementById('modalAdd').classList.add('hidden');
-            } else if (id == "editButton") {
-                document.getElementById('modalEdit').classList.add('hidden');
-            }
-        }
+<script>
+    function attachEditListeners() {
+        const editModal = document.getElementById('edit-category-modal');
+        const closeBtn = document.getElementById('close-edit-modal');
+        const editForm = document.getElementById('editCategoryForm');
+        const categoryNameInput = document.getElementById('edit-category-name');
+        const categoryIdInput = document.getElementById('edit-category-id');
 
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".editCategoryBtn").forEach(button => {
-                button.addEventListener("click", function() {
-                    let categoryId = this.getAttribute("data-id");
-                    let categoryName = this.getAttribute("data-name");
+        const editButtons = document.querySelectorAll('.edit-btn');
 
-                    document.getElementById("editCategoryName").value = categoryName;
-                    document.getElementById("editCategoryForm").setAttribute("action",
-                        "/categories/" + categoryId);
-                });
+        editButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const categoryId = this.getAttribute('data-id');
+                const categoryName = this.getAttribute('data-name');
+
+                categoryNameInput.value = categoryName;
+                categoryIdInput.value = categoryId;
+
+                editModal.classList.remove('hidden');
             });
         });
-    </script>
+
+        closeBtn.addEventListener('click', () => {
+            editModal.classList.add('hidden');
+        });
+    }
+
+    document.getElementById('editCategoryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const response = await fetch('/api/data/categories', {
+            method: 'PUT',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                id: document.getElementById('edit-category-id').value,
+                name: document.getElementById('edit-category-name').value,
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            window.location.href = "/kategori";
+        } else {
+            let errors = data.message || "Ubah kategori gagal";
+            if (typeof data === 'object' && !data.success) {
+                errors = Object.values(data).flat().join('\n');
+            }
+            document.getElementById('errorMsg').innerText = errors;
+        }
+    });
+
+    document.getElementById('createCategoryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const response = await fetch('/api/data/categories', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                name: document.getElementById('name').value,
+                orgId: orgId
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            window.location.href = "/kategori";
+        } else {
+            let errors = data.message || "Tambah kategori gagal";
+            if (typeof data === 'object' && !data.success) {
+                errors = Object.values(data).flat().join('\n');
+            }
+            document.getElementById('errorMsg').innerText = errors;
+        }
+    })
+</script>
+
 @endsection

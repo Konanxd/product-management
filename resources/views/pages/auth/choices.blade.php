@@ -17,6 +17,7 @@
         if (token) {
             fetch('/api/auth/me', {
                     headers: {
+                        'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token,
                         'Accept': 'application/json'
                     }
@@ -33,12 +34,15 @@
                 .catch(err => {
                     console.warn("Token invalid:", err);
                     localStorage.removeItem('token');
+                    window.location.href = '/masuk';
                 });
+        } else {
+            window.location.href = '/masuk';
         }
 
         function logout() {
             localStorage.removeItem('token');
-            window.location.href = '/login';
+            window.location.href = '/masuk';
         }
     </script>
 
@@ -73,13 +77,13 @@
 
                 <h1 class="text-3xl font-bold text-white mb-3">Satu Langkah Terakhir!</h1>
                 <p class="text-blue-100 max-w-sm">
-                    Untuk mengelola inventaris anda, anda harus menjadi bagian dari sebuah organisasi atau anda dapat membuat yang baru atau bergabung dengan tim yang sudah ada.
+                    Untuk mengelola inventaris, Anda harus menjadi bagian dari sebuah organisasi atau anda dapat membuat yang baru atau bergabung dengan tim yang sudah ada.
                 </p>
             </div>
         </div>
 
         <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-            <h2 class="text-2xl font-bold text-gray-800 mb-8">Pilih Jalan Anda (anjayyy)</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-8">Pilih</h2>
 
             <div class="space-y-4">
                 <button id="create-org-btn" class="w-full flex items-start p-5 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 hover:border-blue-500 transition-all duration-300 cursor-pointer text-left">
@@ -92,7 +96,7 @@
                     </div>
                     <div>
                         <h3 class="font-semibold text-lg text-gray-800">Buat Organisasi</h3>
-                        <p class="text-sm text-gray-500">Mulai tim baru dan undang anggoya anda.</p>
+                        <p class="text-sm text-gray-500">Mulai tim baru dan undang anggota anda.</p>
                     </div>
                 </button>
 
@@ -125,21 +129,24 @@
                 </button>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Buat Organisasi Baru</h2>
                 <p class="text-gray-500 mb-6">Jelaskan tujuan tim Anda untuk mendapatkan ide nama yang bagus.</p>
+                <p id="errorMsg" class="text-red-500 text-sm mb-2"></p>
 
-                <div class="space-y-4">
-                    <form id='createOrgForm'></form>
-                    <div>
-                        <label for="org-name" class="block text-sm font-medium text-gray-700 mb-1">Nama Organisasi Anda</label>
-                        <input type="text" id="orgName" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Isi nama pilihan Anda di sini">
+                <form id='createOrgForm'>
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label for="org-name" class="block text-sm font-medium text-gray-700 mb-1">Nama Organisasi Anda</label>
+                            <input type="text" name="name" id="name" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Isi nama pilihan Anda di sini">
+                        </div>
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Organisasi</label>
+                            <textarea id="description" name="description" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contoh: Perusahaan yang bergerrak di mana gitu..."></textarea>
+                        </div>
                     </div>
-                    <div>
-                        <label for="orgPurpose" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Organisasi</label>
-                        <textarea id="org-purpose" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contoh: Perusahaan yang bergerrak di mana gitu..."></textarea>
+                    <div class="mt-6">
+                        <button type='submit' class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-300">Selesaikan dan Buat</button>
                     </div>
-                </div>
-                <div class="mt-6">
-                    <button class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-300">Selesaikan dan Buat</button>
-                </div>
+                </form>
             </div>
         </div>
 
@@ -175,28 +182,25 @@
         setupModal('create-org-btn', 'close-create-modal', 'create-org-modal');
         setupModal('join-org-btn', 'close-join-modal', 'join-org-modal');
 
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        document.getElementById('createOrgForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const response = await fetch('/api/auth/create_organization', {
                 method: 'POST',
                 headers: {
                     'Content-type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     name: document.getElementById('name').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value,
-                    password_confirmation: document.getElementById('password_confirmation')
-                        .value,
+                    description: document.getElementById('description').value
                 })
             });
 
             const data = await response.json();
 
-            if (response.ok && data.success && data.access_token) {
-                localStorage.setItem('token', data.access_token);
+            if (response.ok && data.success) {
                 window.location.href = "/dashboard";
             } else {
                 let errors = data.message || "Registrasi gagal";

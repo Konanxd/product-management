@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::all();
-        return view('pages.category.index', compact('categories'));
+        return view('pages.category.index');
     }
 
     public function create()
@@ -24,33 +23,58 @@ class CategoryController extends Controller
         return view('pages.category.edit');
     }
 
+    public function data()
+    {
+        $auth = auth('api')->user();
+        $user = User::find($auth['id']);
+
+        $org = $user->organizations;
+
+        $categories = Category::where('organization_id', $org[0]['id'])
+            ->withSum('products as total_stock', 'stock')
+            ->get();
+
+        return response()->json([
+            'user' => $user,
+            'organizations' => $org,
+            'categories' => $categories
+        ]);
+    }
+
     public function store(Request $request)
     {
-        // dd($request);
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => 'required|string|max:255',
+            'orgId' => 'required|string',
         ]);
 
         Category::create([
             'name' => $request->name,
+            'organization_id' => $request->orgId,
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambahkan!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Kategori berhasil ditambahkan',
+        ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        // dd($request);
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'id' => 'required|string',
+            'name' => 'required|string|max:255',
         ]);
 
-        $category = Category::findOrFail($id);
+        $category = Category::findOrFail($request->id);
         $category->update([
             'name' => $request->name,
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Kategori berhasil diperbarui!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Kategori berhasil diubah',
+        ]);
     }
 
     public function destroy($id)

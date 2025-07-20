@@ -23,9 +23,8 @@ class OrgController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
+            'name' => 'required|string|unique:organizations,name',
             'description' => 'required|string',
-            'user_id' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -40,10 +39,20 @@ class OrgController extends Controller
         ]);
 
         if (!$organization) {
-
             return response()->json([
                 'success' => false,
                 'message' => 'Organisasi sudah terdaftar'
+            ], 409);
+        }
+
+        $addOwner = $user->organizations()->syncWithoutDetaching([
+            $organization->id => ['role' => 'owner']
+        ]);
+
+        if (!$addOwner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan'
             ], 409);
         }
 

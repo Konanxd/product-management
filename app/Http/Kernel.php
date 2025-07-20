@@ -43,7 +43,7 @@ class Kernel extends HttpKernel
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ],
+        ]
     ];
 
     /**
@@ -67,7 +67,12 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];
 
-    // protected $routeMiddleware = [
-    //     'tenant' => \App\Http\Middleware\EnsureUserHasOrganization::class
-    // ];
+    protected $routeMiddleware = [
+        // 'jwt.auth' => [
+        //     \Tymon\JWTAuth\Http\Middleware\Authenticate::class
+        // ],
+        // 'jwt' => [
+        //     \App\Http\Middleware\JwtMiddleware::class
+        // ]
+    ];
 }

@@ -29,13 +29,13 @@ Route::get('/create_organization', [OrgController::class, 'create']);
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/kategori', [CategoryController::class, 'index'])->name('categories.index');
 
 Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
 Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
 Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/produk', [ProductController::class, 'index'])->name('products.index');
 
 Route::post('/products', [ProductController::class, 'store'])->name('products.store');
 Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');

@@ -1,179 +1,359 @@
 @extends('layouts.main')
 
+@section('script')
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/masuk';
+    }
+
+    let data = null;
+    let orgId = '';
+
+    (async () => {
+        try {
+            const res = await fetch('/api/data/products', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error("Unauthorized");
+            }
+
+            data = await res.json();
+            console.log(data);
+
+            if (!data.user || data.organizations.length == null) {
+                window.location.href = '/choices';
+                return;
+            }
+
+            orgId = `${data.organizations[0].id}`
+
+            document.getElementById('username').innerText = data.user.name;
+
+            let tableContent = '';
+
+            // Recommended forEach loop
+            data.products.forEach(product => {
+                tableContent += `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">${product.name}</td>
+                        <td class="px-6 py-4"><img src="${product.image ?? 'https://placehold.co/60x60/e2e8f0/334155?text=Produk'}" alt="Gambar Produk" class="h-10 w-10 rounded object-cover"></td>
+                        <td class="px-6 py-4">${product.category.name}</td>
+                        <td class="px-6 py-4">${product.stock}</td>
+                        <td class="px-6 py-4">Rp ${product.price.toLocaleString('id-ID')}</td>
+
+                        <td class="px-6 py-4 text-right"
+                            data-id="${product.id}"
+                            data-name="${product.name}"
+                            data-category-id="${product.category_id}"
+                            data-stock="${product.stock}"
+                            data-price="${product.price}">
+                            <a href="#" class="edit-btn font-medium text-blue-600 hover:underline mr-3">Edit</a>
+                            <a href="#" class="font-medium text-red-600 hover:underline">Hapus</a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('products').innerHTML = tableContent;
+
+            const categorySelect = document.getElementById('add-product-category');
+
+            data.categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+
+            attachAddListeners();
+            attachEditListeners();
+        } catch (err) {
+            console.error("Page error:", err);
+            // localStorage.removeItem('token');
+            // window.location.href = '/masuk';
+        }
+    })();
+
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/masuk';
+    }
+</script>
+@endsection
+
 @section('content')
-    <div class="flex flex-col justify-center w-full px-4">
-        <h1 class="text-4xl font-semibold">Products</h1>
 
-        <div class="w-full flex justify-center">
-            <div class="w-full my-4 mx-20 p-4">
-                <h2 class="text-center text-3xl font-semibold mb-4">Product's List</h2>
-
-                @if (session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4"
-                        id="successMessage">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                <div class="flex justify-between mb-3">
-                    <input id="searchInput"
-                        class="w-1/4 p-2 border-2 border-slate-400 rounded-md focus:outline-none focus:shadow-sky-300 focus:shadow-2xl transition duration-300"
-                        placeholder="Cari produk..." />
-                    <button id="addButton" onclick="openModal(this.id)"
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" data-bs-toggle="modal"
-                        data-bs-target="#productModal">Add</button>
-                </div>
-
-                <!-- Table -->
-                <div class="overflow-y-auto max-h-[400px] border rounded shadow-sm">
-                    <table class="min-w-full table-auto">
-                        <thead class="bg-gray-800 text-white">
-                            <tr>
-                                <th class="px-4 py-2 text-left">No</th>
-                                <th class="px-4 py-2 text-left">Image</th>
-                                <th class="px-4 py-2 text-left">Name</th>
-                                <th class="px-4 py-2 text-left">Description</th>
-                                <th class="px-4 py-2 text-left">Stock</th>
-                                <th class="px-4 py-2 text-left">Price</th>
-                                <th class="px-4 py-2 text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productTableBody" class="divide-y divide-gray-200">
-                            @foreach ($products as $product)
-                                <tr id="productRow{{ $product->id }}" class="hover:bg-gray-100">
-                                    <td class="px-4 py-2">{{ $product->name }}</td>
-                                    <td class="px-4 py-2">{{ $product->description }}</td>
-                                    <td class="px-4 py-2">{{ $product->stock }}</td>
-                                    <td class="px-4 py-2">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-                                    <td class="px-4 py-2 space-x-2">
-                                        <!-- Edit Button -->
-                                        <button id="editButton" onclick="openModal(this.id)"
-                                            class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition editProductBtn"
-                                            data-id="{{ $product->id }}" data-name="{{ $product->name }}"
-                                            data-bs-toggle="modal" data-bs-target="#editproductModal">
-                                            <i class="fas fa-edit mr-1"></i> Edit
-                                        </button>
-
-                                        <!-- Delete Form -->
-                                        <form action="{{ route('products.destroy', $product->id) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
-                                                <i class="fas fa-trash mr-1"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Tambah Produk -->
-        <div id="modalAdd" class="fixed inset-0 bg-black/50 z-50 hidden">
-            <div class="flex mt-4 items-center justify-center">
-                <div class="bg-white opacity-100 rounded-lg w-full max-w-md shadow-lg">
-                    <div class="flex justify-between items-center p-4 border-b">
-                        <h5 class="text-lg font-semibold">Tambah Produk</h5>
-                        <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeModal(this.id)"
-                            id="addButton">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="p-4">
-                        <form id="addProductForm" action="/products" method="POST">
-                            @csrf
-                            <div class="mb-4">
-                                <label for="productName" class="block text-sm font-medium text-gray-700 mb-1">Nama
-                                    Produk</label>
-                                <input type="text" name="name" id="productName"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-500"
-                                    required>
-                            </div>
-                            <button type="submit"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2">
-                                <i class="fas fa-save"></i> Simpan
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Edit Produk -->
-        <div id="modalEdit" class="fixed inset-0 bg-black/50 z-50 hidden">
-            <div class="flex mt-4 items-center justify-center">
-                <div class="bg-white opacity-100 rounded-lg w-full max-w-md shadow-lg">
-                    <div class="flex justify-between items-center p-4 border-b">
-                        <h5 class="text-lg font-semibold">Edit Produk</h5>
-                        <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeModal(this.id)"
-                            id="editButton">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="p-4">
-                        <form id="editProductForm" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <div class="mb-4">
-                                <label for="productEdit" class="block text-sm font-medium text-gray-700 mb-1">Nama
-                                    Produk</label>
-                                <input type="text" name="name" id="editProductName"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-500"
-                                    required>
-                            </div>
-                            <button type="submit"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2">
-                                <i class="fas fa-save"></i> Simpan Perubahan
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+<div class="bg-white p-6 rounded-lg shadow-lg">
+    <div class="flex flex-col md:flex-row justify-between md:items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-700 mb-4 md:mb-0">Daftar Inventaris Produk</h3>
+        <button class="add-btn px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">+ Tambah Produk</button>
     </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3">Nama Produk</th>
+                    <th class="px-6 py-3">Gambar</th>
+                    <th class="px-6 py-3">Kategori</th>
+                    <th class="px-6 py-3">Stok</th>
+                    <th class="px-6 py-3">Harga</th>
+                    <th class="px-6 py-3 text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id='products'>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-    <script>
-        function openModal(id) {
-            if (id == "addButton") {
-                document.getElementById('modalAdd').classList.remove('hidden');
-            } else if (id == "editButton") {
-                document.getElementById('modalEdit').classList.remove('hidden');
-            }
-        }
+<div id="add-product-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-700">Tambah Produk Baru</h3>
+            <button id="close-add-modal" class="text-gray-400 hover:text-gray-800">&times;</button>
+        </div>
+        <form id="addProductForm" enctype="multipart/form-data">
+            @csrf
+            <div class="space-y-4">
+                <div>
+                    <label for="add-product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
+                    <input id="add-product-name" name="name" type="text" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-        function closeModal(id) {
-            if (id == "addButton") {
-                document.getElementById('modalAdd').classList.add('hidden');
-            } else if (id == "editButton") {
-                document.getElementById('modalEdit').classList.add('hidden');
-            }
-        }
+                <div>
+                    <label for="add-product-image" class="block text-sm font-medium text-gray-700">Gambar</label>
+                    <input id="add-product-image" name="image" type="file" accept="image/*" class="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
 
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".editProductBtn").forEach(button => {
-                button.addEventListener("click", function() {
-                    let productId = this.getAttribute("data-id");
-                    let productName = this.getAttribute("data-name");
+                <div>
+                    <label for="add-product-category" class="block text-sm font-medium text-gray-700">Kategori</label>
+                    <select id="add-product-category" name="category_id" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="" disabled selected>Pilih Kategori...</option>
+                    </select>
+                </div>
 
-                    document.getElementById("editProductName").value = productName;
-                    document.getElementById("editProductForm").setAttribute("action",
-                        "/products/" + productId);
-                });
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="add-product-stock" class="block text-sm font-medium text-gray-700">Stok</label>
+                        <input id="add-product-stock" name="stock" type="number" min="0" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="add-product-price" class="block text-sm font-medium text-gray-700">Harga (Rp)</label>
+                        <input id="add-product-price" name="price" type="number" min="0" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">Simpan Produk</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="edit-product-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-700">Ubah Produk Baru</h3>
+            <button id="close-edit-modal" class="text-gray-400 hover:text-gray-800">&times;</button>
+        </div>
+        <p class="text-red-500 text-sm" id="errorMsg"></p>
+        <form id="editProductForm" enctype="multipart/form-data">
+            @csrf
+            <input type="text" id="edit-product-id" class="hidden">
+            <div class="space-y-4">
+                <div>
+                    <label for="edit-product-name" class="block text-sm font-medium text-gray-700">Nama Produk</label>
+                    <input id="edit-product-name" name="name" type="text" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label for="edit-product-image" class="block text-sm font-medium text-gray-700">Gambar</label>
+                    <input id="edit-product-image" name="image" type="file" accept="image/*" class="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+
+                <div>
+                    <label for="edit-product-category" class="block text-sm font-medium text-gray-700">Kategori</label>
+                    <select id="edit-product-category" name="category_id" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="" disabled selected>Pilih Kategori...</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-product-stock" class="block text-sm font-medium text-gray-700">Stok</label>
+                        <input id="edit-product-stock" name="stock" type="number" min="0" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="edit-product-price" class="block text-sm font-medium text-gray-700">Harga (Rp)</label>
+                        <input id="edit-product-price" name="price" type="number" min="0" required class="mt-1 w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">Simpan Produk</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<script>
+    function attachAddListeners() {
+        const addModal = document.getElementById('add-product-modal');
+        const closeBtn = document.getElementById('close-add-modal');
+
+        const addButtons = document.querySelectorAll('.add-btn');
+
+        addButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                addModal.classList.remove('hidden');
             });
         });
-    </script>
+
+        closeBtn.addEventListener('click', () => {
+            addModal.classList.add('hidden');
+        });
+    }
+
+    function attachEditListeners() {
+        const editModal = document.getElementById('edit-product-modal');
+        const closeBtn = document.getElementById('close-edit-modal');
+
+        const productNameInput = document.getElementById('edit-product-name');
+        const productIdInput = document.getElementById('edit-product-id');
+        const categorySelect = document.getElementById('edit-product-category');
+        const stockInput = document.getElementById('edit-product-stock');
+        const priceInput = document.getElementById('edit-product-price');
+
+        const editButtons = document.querySelectorAll('.edit-btn');
+
+        editButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const dataCell = this.parentElement;
+
+                const productId = dataCell.getAttribute('data-id');
+                const productName = dataCell.getAttribute('data-name');
+                const categoryId = dataCell.getAttribute('data-category-id');
+                const stock = dataCell.getAttribute('data-stock');
+                const price = dataCell.getAttribute('data-price');
+
+                productNameInput.value = productName;
+                productIdInput.value = productId;
+                categorySelect.value = categoryId;
+                stockInput.value = stock;
+                priceInput.value = price;
+
+                const editCategorySelect = document.getElementById('edit-product-category');
+                editCategorySelect.innerHTML = '';
+                data.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    editCategorySelect.appendChild(option);
+                });
+                editCategorySelect.value = categoryId;
+
+                editModal.classList.remove('hidden');
+            });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            editModal.classList.add('hidden');
+        });
+    }
+
+    document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('add-product-name').value;
+        const categoryId = document.getElementById('add-product-category').value;
+        const stock = document.getElementById('add-product-stock').value;
+        const price = document.getElementById('add-product-price').value;
+        const imageFile = document.getElementById('add-product-image').files[0];
+
+        const response = await fetch('/api/data/products', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                categoryId: categoryId,
+                stock: stock,
+                price: price,
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            window.location.href = "/produk";
+        } else {
+            let errors = data.message || "Tambah produk gagal";
+            if (typeof data === 'object' && !data.success) {
+                errors = Object.values(data).flat().join('\n');
+            }
+            document.getElementById('errorMsg').innerText = errors;
+        }
+    });
+
+    document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const id = document.getElementById('edit-product-id').value;
+        const name = document.getElementById('edit-product-name').value;
+        const categoryId = document.getElementById('edit-product-category').value;
+        const stock = document.getElementById('edit-product-stock').value;
+        const price = document.getElementById('edit-product-price').value;
+        // const imageFile = document.getElementById('edit-product-image').files[0];
+
+        const response = await fetch('/api/data/products', {
+            method: 'PUT',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                id: id,
+                name: name,
+                categoryId: categoryId,
+                stock: parseInt(stock),
+                price: parseInt(price),
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            window.location.href = "/produk";
+        } else {
+            let errors = data.message || "Edit produk gagal";
+            if (typeof data === 'object' && !data.success) {
+                errors = Object.values(data).flat().join('\n');
+            }
+            document.getElementById('errorMsg').innerText = errors;
+        }
+    })
+</script>
+
 @endsection

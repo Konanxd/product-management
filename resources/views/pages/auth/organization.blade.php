@@ -127,8 +127,8 @@
 
             const data = await response.json();
 
-            if (response.ok && data.success && data.access_token) {
-                localStorage.setItem('token', data.access_token);
+            if (response.ok && data.success && data.token) {
+                localStorage.setItem('token', data.token);
                 window.location.href = "/dashboard";
             } else {
                 let message = data.message || "Terjadi kesalahan";

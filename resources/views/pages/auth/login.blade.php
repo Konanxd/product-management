@@ -26,7 +26,7 @@
                     return res.json();
                 })
                 .then(data => {
-                    if (data.organizations.length == 0) {
+                    if (data.organizations == null) {
                         window.location.href = '/choices';
                     }
                     window.location.href = '/dashboard';
@@ -70,6 +70,7 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Masuk ke Akun Anda</h2>
 
             <form id='loginForm'>
+                <p id="errorMsg" class="text-red-500 text-sm mb-2"></p>
                 <div class="mb-4">
                     <label for="email" class="block text-sm font-medium text-gray-600 mb-1">Alamat Email</label>
                     <input type="email" id="email" name="email" placeholder="nama@mail.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
@@ -137,19 +138,15 @@
 
             const data = await response.json();
 
-            if (response.ok && data.success && data.access_token) {
-                if (data.organizations.length == 0) {
-                    window.location.href = '/choices';
-                } else {
-                    window.location.href = "/dashboard";
-                }
-                localStorage.setItem('token', data.access_token);
+            if (response.ok && data.success && data.token) {
+                window.location.href = "/dashboard";
+                localStorage.setItem('token', data.token);
             } else {
                 let errors = data.message || "Login gagal";
                 if (data.errors) {
-                    message = Object.values(data).flat().join('\n');
+                    errors = Object.values(data).flat().join('\n');
                 }
-                document.getElementById('errorMsg').innerText = message;
+                document.getElementById('errorMsg').innerText = errors;
             }
         })
     </script>
