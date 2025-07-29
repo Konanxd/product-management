@@ -56,7 +56,7 @@
                             data-stock="${product.stock}"
                             data-price="${product.price}">
                             <a href="#" class="edit-btn font-medium text-blue-600 hover:underline mr-3">Edit</a>
-                            <a href="#" class="font-medium text-red-600 hover:underline">Hapus</a>
+                            <a href="#" class="delete-btn font-medium text-red-600 hover:underline">Hapus</a>
                         </td>
                     </tr>
                 `;
@@ -75,6 +75,7 @@
 
             attachAddListeners();
             attachEditListeners();
+            attachDeleteModal();
         } catch (err) {
             console.error("Page error:", err);
             // localStorage.removeItem('token');
@@ -210,6 +211,36 @@
 </div>
 
 
+<div id="delete-product-modal"
+    class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
+    <div
+        class="relative bg-white w-full max-w-md mx-auto rounded-lg shadow-lg p-6 transform scale-95 transition-transform duration-300 ease-in-out">
+        <input type="text" class="hidden" id="delete-product-id">
+        <button onclick="toggleModalHapus(null)"
+            class="absolute top-2 right-2 text-black hover:text-red-500 text-3xl z-50">
+            &times;
+        </button>
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Konfirmasi Hapus</h2>
+        <p class="text-gray-600 text-center mb-6">Apakah Anda yakin ingin menghapus data ini?</p>
+
+        <div class="flex justify-center gap-4">
+            <button id="close-product-modal"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md">
+                Tidak
+            </button>
+
+            <form id="deleteForm" class="inline">
+                @csrf
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md">
+                    Ya
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+</div>
 
 <script>
     function attachAddListeners() {
@@ -276,6 +307,32 @@
 
         closeBtn.addEventListener('click', () => {
             editModal.classList.add('hidden');
+        });
+    }
+
+    function attachDeleteModal() {
+        const deleteModal = document.getElementById('delete-product-modal');
+        const closeBtn = document.getElementById('close-product-modal');
+        const productIdInput = document.getElementById('delete-product-id');
+
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const dataCell = this.parentElement;
+
+                const productId = dataCell.getAttribute('data-id');
+
+                productIdInput.value = productId;
+
+                deleteModal.classList.remove('hidden');
+            });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
         });
     }
 
@@ -348,6 +405,36 @@
             window.location.href = "/produk";
         } else {
             let errors = data.message || "Edit produk gagal";
+            if (typeof data === 'object' && !data.success) {
+                errors = Object.values(data).flat().join('\n');
+            }
+            document.getElementById('errorMsg').innerText = errors;
+        }
+    })
+
+    document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const id = document.getElementById('delete-product-id').value;
+
+        const response = await fetch('/api/data/products', {
+            method: 'DELETE',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                id: id,
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            window.location.href = "/produk";
+        } else {
+            let errors = data.message || "Hapus produk gagal";
             if (typeof data === 'object' && !data.success) {
                 errors = Object.values(data).flat().join('\n');
             }

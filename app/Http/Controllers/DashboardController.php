@@ -19,9 +19,9 @@ class DashboardController extends Controller
     {
         $user = auth('api')->user();
 
-        $organizationIds = $user->organizations->pluck('id');
+        $orgId = $user->organizations->pluck('id');
 
-        if ($organizationIds->isEmpty()) {
+        if ($orgId->isEmpty()) {
             return response()->json([
                 'user' => $user,
                 'organizations' => [],
@@ -32,8 +32,15 @@ class DashboardController extends Controller
             ], 200);
         }
 
-        $productsQuery = Product::whereHas('category', function ($query) use ($organizationIds) {
-            $query->whereIn('organization_id', $organizationIds);
+        $products = Product::with('category')
+            ->whereHas('category', function ($query) use ($orgId) {
+                $query->where('organization_id', $orgId);
+            })
+            ->latest()
+            ->get();
+
+        $productsQuery = Product::whereHas('category', function ($query) use ($orgId) {
+            $query->whereIn('organization_id', $orgId);
         });
 
         $totalProduct = $productsQuery->count();
@@ -48,7 +55,8 @@ class DashboardController extends Controller
             'totalProduct' => $totalProduct,
             'lowStockProducts' => $lowStockProducts,
             'emptyStockProducts' => $emptyStockProducts,
-            'recentProducts' => $recentProducts
+            'recentProducts' => $recentProducts,
+            'products' => $products
         ], 200);
     }
 }

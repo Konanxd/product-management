@@ -29,13 +29,40 @@
                 return;
             }
 
-            console.log(data.totalProduct);
+            console.log(data.products);
 
             document.getElementById('username').innerText = data.user.name;
             document.getElementById('totalProduct').innerText = data.totalProduct;
             document.getElementById('lowStockProducts').innerText = data.lowStockProducts;
             document.getElementById('emptyStockProducts').innerText = data.emptyStockProducts;
 
+            let tableContent = '';
+
+            data.products.forEach(product => {
+                const date = new Date(product.created_at);
+                const readable = date.toLocaleString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                    timeZoneName: 'short'
+                });
+
+                tableContent +=
+                    `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">${product.name}</td>
+                        <td class="px-6 py-4">${product.category.name}</td>
+                        <td class="px-6 py-4">${product.stock}</td>
+                        <td class="px-6 py-4">${readable}</td>
+                    </tr>
+                `
+            });
+
+            document.getElementById('products').innerHTML = tableContent;
         } catch (err) {
             console.error("Page error:", err);
             // localStorage.removeItem('token');
@@ -122,33 +149,7 @@
                     <th scope="col" class="px-6 py-3">Tanggal Ditambahkan</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium text-gray-900">Pupuk Organik Cair Super</td>
-                    <td class="px-6 py-4">Pupuk</td>
-                    <td class="px-6 py-4">150</td>
-                    <td class="px-6 py-4">12 Juli 2025</td>
-                </tr>
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium text-gray-900">Pupuk Organik Cair Super</td>
-                    <td class="px-6 py-4">Pupuk</td>
-                    <td class="px-6 py-4">150</td>
-                    <td class="px-6 py-4">12 Juli 2025</td>
-                </tr>
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium text-gray-900">Pupuk Organik Cair Super</td>
-                    <td class="px-6 py-4">Pupuk</td>
-                    <td class="px-6 py-4">150</td>
-                    <td class="px-6 py-4">12 Juli 2025</td>
-                </tr>
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium text-gray-900">Pupuk Organik Cair Super</td>
-                    <td class="px-6 py-4">Pupuk</td>
-                    <td class="px-6 py-4">150</td>
-                    <td class="px-6 py-4">12 Juli 2025</td>
-                </tr>
-
-
+            <tbody id="products">
             </tbody>
         </table>
     </div>

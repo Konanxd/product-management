@@ -3,9 +3,12 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MembersController;
 use App\Http\Controllers\OrgController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +48,8 @@ Route::group([
     Route::get('/me', [AuthController::class, 'me']);
 
     Route::post('/create_organization', [OrgController::class, 'register']);
+    Route::get('/create-inv', [OrganizationInvitation::class, 'create']);
+    Route::post('/join-inv', [OrganizationInvitation::class, 'join']);
 });
 
 Route::group([
@@ -59,5 +64,10 @@ Route::group([
 
     Route::get('/products', [ProductController::class, 'data'])->name('products.get');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    Route::put('/products', [ProductController::class, 'update'])->name('products.store');
+    Route::put('/products', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/products', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    Route::get('/members', [MembersController::class, 'data'])->name('members.get');
+
+    Route::get('/report', [ReportController::class, 'data'])->name('report.get');
 });

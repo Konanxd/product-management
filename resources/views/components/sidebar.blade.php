@@ -21,15 +21,14 @@
 
                     <span class="ml-2 text-base font-medium">Laporan</span>
                 </a>
-                <a href="{{ url('/profile') }}" class="flex items-center w-full h-9 px-3 py-6 mt-2 rounded-lg text-gray-200 hover:bg-blue-900 hover:text-white">
+                <a href="{{ url('/anggota') }}" class="flex items-center w-full h-9 px-3 py-6 mt-2 rounded-lg text-gray-200 hover:bg-blue-900 hover:text-white">
 
-                    <span class="ml-2 text-base font-medium">Profile</span>
+                    <span class="ml-2 text-base font-medium">Anggota</span>
                 </a>
             </div>
         </div>
         <div class="mt-auto w-full px-2">
-            <button class="flex items-center justify-center w-full h-12 px-3 rounded-lg bg-red-600 text-white hover:bg-red-700"
-                onclick="#">
+            <button class="flex items-center justify-center w-full h-12 px-3 rounded-lg bg-red-600 text-white hover:bg-red-700">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>

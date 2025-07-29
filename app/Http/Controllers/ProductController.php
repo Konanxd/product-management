@@ -64,7 +64,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Kategori berhasil ditambahkan',
+            'message' => 'Produk berhasil ditambahkan',
         ]);
     }
 
@@ -100,18 +100,25 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Kategori berhasil ditambahkan',
+            'message' => 'Produk berhasil diubah',
         ]);
     }
 
-    public function destroy(Product $product, $id)
+    public function destroy(Request $request)
     {
-        $product = Product::findOrFail($id);
+        $request->validate([
+            'id' => 'required|string',
+        ]);
+
+        $product = Product::findOrFail($request->id);
         if ($product->image && !filter_var($product->image, FILTER_VALIDATE_URL)) {
             Storage::disk('public')->delete($product->image);
         }
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk berhasil dihapus'
+        ]);
     }
 }
